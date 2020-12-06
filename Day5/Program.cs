@@ -11,7 +11,7 @@ namespace Day5
             string[] values = inputtext.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
             var seatIds = values.Select(boardingpass =>
-            {
+            { 
                 string bytes = boardingpass
                     .Replace('F', '0')
                     .Replace('B', '1')
