@@ -9,15 +9,14 @@ namespace Day6
         static void Main(string[] args)
         {
             string inputtext = System.IO.File.ReadAllText(@"input.txt");
-
             var values = inputtext.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
 
-            var part1 = values.Select(v => v.Distinct()
+            int part1 = values.Select(v => v.Distinct()
                             .Where(c => c != '\n')
                             .Count()
                         ).Sum(i => i);
 
-            var part2 = values.Select(v =>
+            int part2 = values.Select(v =>
             {
                 var result = v.Where(char.IsLetter).GroupBy(c => c).Select(g => (
                     Letter: g.Key,
