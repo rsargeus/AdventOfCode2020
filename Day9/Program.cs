@@ -14,7 +14,7 @@ namespace Day9
             List<long> numbers = values.Select(v => long.Parse(v)).ToList();
 
             long part1 = Find(25, numbers);
-            var foundPart2 = TryGetSumRange(numbers, part1, out IEnumerable<long> range);            
+            var foundPart2 = TryGetSumRange(numbers, part1, out  IEnumerable<long> range);            
             long part2 = range.Min() + range.Max();
 
             Console.WriteLine($"Part1: {part1} Part2: {part2} : {foundPart2}");
