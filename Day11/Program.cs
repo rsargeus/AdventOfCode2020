@@ -1,121 +1,184 @@
 ﻿using System;
+using System.Linq;
 
 namespace Day11
 {
     class Program
-    {
-        public static string seats;
+    {        
         public static int rowLength;
 
         static void Main(string[] args)
         {
-            seats = System.IO.File.ReadAllText(@"input-example.txt");
-            rowLength = seats.Split('\n')[0].Length;
+            string seats = System.IO.File.ReadAllText(@"input-example.txt");
+            rowLength = seats.Split('\n')[0].Length+1;
+            Console.WriteLine(seats);            
 
+            string previousRound = "";
+            for (int i = 1; seats != previousRound; i++) 
+            {
+                Console.WriteLine($"----------Round {i}------------------------");
+
+                previousRound = seats;
+                seats = NewRound(seats, 5, int.MaxValue);
+                Console.WriteLine(seats);
+                
+            }
+
+            int part1 = seats.Count(c => c == '#');
+            Console.WriteLine($"Part1: {part1}");   
+        }
+
+        private static string NewRound(string seats, int maximumOccupiedSeats, int sightDistance)
+        {
             string nextRound = "";
-            for (int i = 0; i < seats.Length; i++)             
+            for (int i = 0; i < seats.Length; i++)
             {
                 var c = seats[i];
-                if (c == '\n')
+                switch (c)
                 {
-                    nextRound += '\n'; 
-                    continue;
-                }
+                    case '\n':
+                        nextRound += c;
+                        continue;
+                    case '.':
+                        nextRound += c;
+                        continue;
 
-                if (c == '.')
-                {
-                    nextRound += '.';
-                    continue;
-                }
+                    case 'L':
+                        if (IsAvailable(i, seats, sightDistance))
+                        {
+                            nextRound += '#';
+                        }
+                        else 
+                        {
+                            nextRound += c;
+                        }
+                        continue;
+                    case '#':
+                        if (ToCrowded(i, seats, maximumOccupiedSeats, sightDistance))
+                        {
+                            nextRound += 'L';
+                        }
+                        else
+                        {
+                            nextRound += c;
+                        }
 
-                if (c == 'L' && IsAvailable(i))
-                {
-                    nextRound += '#';
-                }
-                else 
-                {
-                    nextRound += 'L';
-                }
-
-                
-                
-                
+                        continue;
+                }                
             }
 
-            //string inputtext = System.IO.File.ReadAllText(@"input-example2.txt");
-            //string[] values = inputtext.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);            
-
-            Console.WriteLine(seats);
-
-            Console.WriteLine();
-
-            Console.WriteLine(nextRound);
+            return nextRound;
         }
 
-        private static bool IsAvailable(int i)
+        private static bool ToCrowded(int i, string seats, int maximumOccupiedSeats, int sightDistance)
+        {
+            bool[] a = GetOccupiedSeats(i, seats, sightDistance);
+            int b = a.Where(b => b).Count();
+
+            return a[0] && b > maximumOccupiedSeats;
+        }
+
+        private static bool IsAvailable(int i, string seats, int sightDistance)
         {            
-            int seatNumberAbove = i - rowLength;
 
-            if (
+            bool[] a = GetOccupiedSeats(i, seats, sightDistance);
+            int b = a.Where(b => b).Count();
 
-                //Is outside area
-                IsOutsideArea(seatNumberAbove) ||
-
-                //Is empty
-                seats[i] == 'L' &&
-
-                //Above-Left
-                IsFree(i - rowLength - 1) &&
-
-                //Above-Right
-                IsFree(i - rowLength + 1) &&
-
-                //Right
-                IsFree(i + 1) &&
-
-                //Below
-                IsFree(i + rowLength) &&
-
-                //Below-Left
-                IsFree(i + rowLength - 1) &&
-
-                //Below-Right
-                IsFree(i + rowLength + 1) &&
-
-                //Left
-                IsFree(i - 1)
-                )
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return b == 0;
         }
 
-        private static bool IsFree(int position)
+        private static bool[] GetOccupiedSeats(int i, string seats, int sightDistance)
         {
-            if (seats[position] == 'L' || seats[position] == '\n' || seats[position] == '.')
-            {
-                return true;
-            }
-            else 
-            {
-                return false;
-            }
+            /*int aboveLeft = i - rowLength - 1;
+            int above = i - rowLength;
+            int aboveRight = i - rowLength + 1;
+            int right = i + 1;
+            int belowLeft = i + rowLength - 1;
+            int below = i + rowLength;
+            int belowRight = i + rowLength + 1;
+            int left = i - 1;*/
+            
+            var bits = new bool[9];
+
+            //Is empty
+            bits[0] = seats[i] == '#';
+
+            //Above-Left
+            bits[1] = !IsFree(i, seats, -1, -1, sightDistance);
+
+            //Above
+            bits[2] = !IsFree(i, seats, 0, -1, sightDistance);
+
+            //Above-Right
+            bits[3] = !IsFree(i, seats, 1, -1, sightDistance);
+
+            //Right
+            //var asd = !IsFree(right, seats); 
+            bits[4] = !IsFree(i, seats, 1, 0, sightDistance);
+
+            
+
+            //Below-Left
+            bits[5] = !IsFree(i, seats, -1, 1, sightDistance);
+
+            //Below
+            bits[6] = !IsFree(i, seats, 0, 1, sightDistance);
+
+            //Below-Right
+            bits[7] = !IsFree(i, seats, 1, 1, sightDistance);
+
+            //Left
+            bits[8] = !IsFree(i, seats, -1, 0, sightDistance);
+            //bits[8] = !IsFree(left, seats);
+
+            return bits;
         }
 
-        private static bool IsOutsideArea(int seatNumber)
+        private static bool IsFree(int position, string seats, int horizontalAdjustment, int verticalAdjustment, int distance) 
         {
-            if (seatNumber < 0 || seatNumber >= rowLength)
+            bool outOfRange = false;
+            
+            for(int i=1; !outOfRange && i <= distance; i++)
             {
-                return true;
-            }            
-            else
-            {
-                return false;
+
+                if (i == 2) 
+                {
+                    string s = "";
+                }
+
+
+
+                int x = horizontalAdjustment * i;
+                int y = position + (rowLength * i * verticalAdjustment);
+                
+                bool isFree = IsFree(y + x, seats, out outOfRange);
+
+                if (isFree && !outOfRange) 
+                {
+                    return true;
+                }
+                
+                if (outOfRange) 
+                {
+                    return true;
+                }
+                
+                /*
+                if (!isFree) 
+                {
+                    return true;
+                }*/
             }
+
+            return false;            
         }       
+        
+
+        private static bool IsFree(int position, string seats, out bool outOfRange)
+        {
+            outOfRange = position < 0 || position >= seats.Length;
+
+            return outOfRange || seats[position] == 'L' || seats[position] == '\n' || seats[position] == '.';
+        }
     }
 }
