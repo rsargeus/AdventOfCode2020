@@ -6,17 +6,18 @@ namespace Day11
     class Program
     {        
         public static int rowLength;
+        public static int round = 0;
 
         static void Main(string[] args)
         {
-            string seats = System.IO.File.ReadAllText(@"input-example.txt");
+            string seats = System.IO.File.ReadAllText(@"input.txt");
             rowLength = seats.Split('\n')[0].Length+1;
             Console.WriteLine(seats);            
 
             string previousRound = "";
-            for (int i = 1; seats != previousRound; i++) 
+            for (round = 1; seats != previousRound; round++) 
             {
-                Console.WriteLine($"----------Round {i}------------------------");
+                Console.WriteLine($"----------Round {round}------------------------");
 
                 previousRound = seats;
                 seats = NewRound(seats, 5, int.MaxValue);
@@ -88,97 +89,91 @@ namespace Day11
         }
 
         private static bool[] GetOccupiedSeats(int i, string seats, int sightDistance)
-        {
-            /*int aboveLeft = i - rowLength - 1;
-            int above = i - rowLength;
-            int aboveRight = i - rowLength + 1;
-            int right = i + 1;
-            int belowLeft = i + rowLength - 1;
-            int below = i + rowLength;
-            int belowRight = i + rowLength + 1;
-            int left = i - 1;*/
-            
+        {                        
             var bits = new bool[9];
-
+            
             //Is empty
             bits[0] = seats[i] == '#';
 
             //Above-Left
-            bits[1] = !IsFree(i, seats, -1, -1, sightDistance);
+            bits[1] = IsInSight(i, seats, -1, -1, sightDistance);
 
             //Above
-            bits[2] = !IsFree(i, seats, 0, -1, sightDistance);
+            bits[2] = IsInSight(i, seats, 0, -1, sightDistance);
 
             //Above-Right
-            bits[3] = !IsFree(i, seats, 1, -1, sightDistance);
+            bits[3] = IsInSight(i, seats, 1, -1, sightDistance);
 
-            //Right
-            //var asd = !IsFree(right, seats); 
-            bits[4] = !IsFree(i, seats, 1, 0, sightDistance);
-
-            
+            //Right            
+            bits[4] = IsInSight(i, seats, 1, 0, sightDistance);            
 
             //Below-Left
-            bits[5] = !IsFree(i, seats, -1, 1, sightDistance);
+            bits[5] = IsInSight(i, seats, -1, 1, sightDistance);
 
             //Below
-            bits[6] = !IsFree(i, seats, 0, 1, sightDistance);
+            bits[6] = IsInSight(i, seats, 0, 1, sightDistance);
 
             //Below-Right
-            bits[7] = !IsFree(i, seats, 1, 1, sightDistance);
+            bits[7] = IsInSight(i, seats, 1, 1, sightDistance);
 
             //Left
-            bits[8] = !IsFree(i, seats, -1, 0, sightDistance);
-            //bits[8] = !IsFree(left, seats);
+            bits[8] = IsInSight(i, seats, -1, 0, sightDistance);            
 
             return bits;
         }
 
-        private static bool IsFree(int position, string seats, int horizontalAdjustment, int verticalAdjustment, int distance) 
+        private static bool IsInSight(int position, string seats, int horizontalAdjustment, int verticalAdjustment, int distance) 
         {
             bool outOfRange = false;
             
             for(int i=1; !outOfRange && i <= distance; i++)
             {
 
-                if (i == 2) 
+                int x = horizontalAdjustment * i;
+                int y = position + (rowLength * i * verticalAdjustment);
+
+                int seenPosition = x + y;
+
+                if (i == 2 && round == 2) 
                 {
                     string s = "";
                 }
 
 
 
-                int x = horizontalAdjustment * i;
-                int y = position + (rowLength * i * verticalAdjustment);
                 
-                bool isFree = IsFree(y + x, seats, out outOfRange);
+                
+                char? seat = TryGetSeat(seenPosition, seats, out outOfRange);
 
-                if (isFree && !outOfRange) 
+                if (outOfRange)
+                    return false;
+
+                switch (seat.Value) 
                 {
-                    return true;
-                }
-                
-                if (outOfRange) 
-                {
-                    return true;
-                }
-                
-                /*
-                if (!isFree) 
-                {
-                    return true;
-                }*/
+                    case 'L':
+                        return false;
+                    case '#':
+                        return true;
+                    case '.':
+                        continue;
+                    case '\n':
+                        return false;
+                        
+                }                                
             }
 
             return false;            
-        }       
-        
+        }
 
-        private static bool IsFree(int position, string seats, out bool outOfRange)
+
+        private static char? TryGetSeat(int position, string seats, out bool outOfRange)
         {
-            outOfRange = position < 0 || position >= seats.Length;
+            outOfRange = position < 0 || position >= seats.Length;            
 
-            return outOfRange || seats[position] == 'L' || seats[position] == '\n' || seats[position] == '.';
+            if (outOfRange)
+                return null;
+            else
+                return seats[position];                                    
         }
     }
 }
